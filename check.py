@@ -4,6 +4,7 @@ import io
 import pandas as pd
 import streamlit as st
 from PIL import Image, ImageEnhance
+import pytesseract  # 補上必要的套件匯入
 
 st.set_page_config(page_title="檔案遺漏比對與匯出工具", layout="wide")
 st.title("🖼️ 檔案遺漏比對與下載工具")
@@ -34,11 +35,11 @@ if uploaded_excel and uploaded_images:
                     enhancer = ImageEnhance.Contrast(gray_img)
                     contrast_img = enhancer.enhance(1.8)
                     
-                    # 3. 圖片放大 2 倍 (幫助小字體與模糊文字辨識)
+                    # 3. 圖片放大 2 倍 (幫助小字體辨識)
                     new_size = (contrast_img.width * 2, contrast_img.height * 2)
                     resized_img = contrast_img.resize(new_size, Image.Resampling.LANCZOS)
                     
-                    # 4. OCR 辨識 (--psm 6 適合表格/塊狀文字)
+                    # 4. OCR 辨識
                     text = pytesseract.image_to_string(resized_img, config='--psm 6')
                     
                     matches = re.findall(r'\b\d{4}[_-]\d{4}(?:_[A-Za-z]+)?\b', text)
@@ -53,7 +54,6 @@ if uploaded_excel and uploaded_images:
         summary_data = []
         missing_details = {}
 
-        # 整理統計資料與各年份遺漏檔案
         for col in df.columns:
             year = str(col).replace('清單', '').strip()
             raw_items = df[col].dropna().astype(str).str.strip().tolist()
